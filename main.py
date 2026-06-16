@@ -1,26 +1,24 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
+from google.cloud import storage
+from PIL import Image
+from io import BytesIO
 
-df = pd.DataFrame({
-    "Mês": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
-    "Vendas": [120, 145, 98, 200, 175, 230],
-    "Clientes": [40, 55, 35, 80, 70, 95]
-})
+# Cliente autenticado
+client = storage.Client.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
 
-st.title("Painel de Vendas")
+bucket_nome = "projeto-copa-aclara"
+arquivo = "imagens_jogadores/ale_1.jpg"
 
-st.write("Resumo dos últimos 6 meses")
+bucket = client.bucket(bucket_nome)
+blob = bucket.blob(arquivo)
 
-st.subheader("Dados brutos")
+imagem_bytes = blob.download_as_bytes()
 
-st.dataframe(df, use_container_width=True)
+imagem = Image.open(BytesIO(imagem_bytes))
 
-st.subheader("Vendas por mês")
-fig_bar = px.bar(df, x="Mês", y="Vendas")
-
-st.plotly_chart(fig_bar, use_container_width=True)
-
-st.subheader("Tendência de clientes")
-fig_line = px.line(df, x="Mês", y="Clientes", markers=True)
-st.plotly_chart(fig_line, use_container_width=True)
+st.image(
+    imagem,
+    caption="Imagem do Datalake - Google Cloud Storage"
+)
