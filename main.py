@@ -50,6 +50,16 @@ client = storage.Client.from_service_account_info(
 bucket_nome = "projeto-copa-aclara"
 bucket = client.bucket(bucket_nome)
 
+fifa_ranking_2026 = pd.read_csv('dataset/fifa_ranking_2026-06-08.csv')
+fifa_ranking_2022 = pd.read_csv('dataset/fifa_ranking_2022-10-06.csv')
+
+fifa_ranking = pd.merge(
+    fifa_ranking_2026[['team','points']],
+    fifa_ranking_2022[['team','points']],
+    on='team',
+    suffixes=('_2026','_2022')
+)
+
 partidas = pd.read_csv('dataset/matches_1930_2022.csv')
 anos = sorted(partidas['Year'].unique().tolist(), reverse=True)
 
@@ -95,6 +105,8 @@ else:
         (partidas_brasil["home_team"] == oponente_selecionado) & (partidas_brasil["away_team"] == "Brazil")
     ]
 
+    fifa_ranking = fifa_ranking[(fifa_ranking['team'] == oponente_selecionado)]
+
 if ano_selecionado != "Todos":
     partidas_filtradas = partidas_filtradas[(partidas_filtradas["Year"] == int(ano_selecionado))]
 
@@ -126,14 +138,14 @@ with col2:
 with col3:
     st.metric(label="Empates", value=empates)
 with col4:
-    st.metric(label=f"Vitórias ({oponente_selecionado if oponente_selecionado != 'Todos' else 'Oponentes'})", value=vitorias_oponente)
+    st.metric(label="Derrotas", value=vitorias_oponente)
 
 st.markdown("---")
 
 # 2. Gráficos em Colunas lado a lado
-col_graf1, col_graf2 = st.columns(2)
+linha1_col1, linha1_col2 = st.columns(2)
 
-with col_graf1:
+with linha1_col1:
     st.subheader("🥇 Ranking de Campeões")
     copas = pd.read_csv('dataset/world_cup.csv')
     copas = copas.drop(['Host', 'Teams', 'Runner-Up', 'TopScorrer', 'Attendance', 'AttendanceAvg', 'Matches'], axis=1)
@@ -159,7 +171,7 @@ with col_graf1:
     )
     st.plotly_chart(fig1, use_container_width=True)
 
-with col_graf2:
+with linha1_col2:
     # Título dinâmico
     if oponente_selecionado == "Todos":
         titulo_graf2 = "Histórico Geral do Brasil em Copas"
@@ -193,3 +205,18 @@ with col_graf2:
     )
     
     st.plotly_chart(fig2, use_container_width=True)
+
+st.subheader("Fifa Ranking 2022 x 2026")
+
+df = fifa_ranking.set_index('team')
+
+fifa_long = fifa_ranking.melt(
+    id_vars='team',
+    value_vars=['points_2026','points_2022'],
+    var_name='year',
+    value_name='points'
+)
+
+fig = px.bar(fifa_long, x="team", y="points", color="year", barmode="group")
+fig.update_xaxes(range=[-0.5, 9.5])
+st.plotly_chart(fig, width="stretch")
