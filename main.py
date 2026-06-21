@@ -5,6 +5,8 @@ from io import BytesIO
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import requests
+import os
 
 # ================= CONFIGURAÇÃO DA PÁGINA =================
 st.set_page_config(
@@ -38,11 +40,13 @@ st.markdown("""
 
 # Título Principal
 st.title("🏆 Projeto Copa — Histórico & Estatísticas")
-st.markdown("Explore os dados históricos de todas as Copas do Mundo de 1930 a 2022.")
 st.markdown("---")
 
 # ================= AUTENTICAÇÃO E DADOS =================
 # Cliente autenticado
+
+HEADERS = {"Authorization": st.secrets["api"]["API_KEY"]}
+
 client = storage.Client.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
@@ -220,3 +224,42 @@ fifa_long = fifa_ranking.melt(
 fig = px.bar(fifa_long, x="team", y="points", color="year", barmode="group")
 fig.update_xaxes(range=[-0.5, 9.5])
 st.plotly_chart(fig, width="stretch")
+
+# Função para redimensionar
+def redimensionar_imagem(imagem_bytes, tamanho=(250, 300)):
+    """Redimensiona imagem para tamanho fixo"""
+    img = Image.open(BytesIO(imagem_bytes))
+    img = img.resize(tamanho, Image.Resampling.LANCZOS)
+    return img
+
+st.title("Seleção Brasileira")
+
+# Seu fetch de dados
+url_jogadores = "https://footballdata.io/api/v1/players?team_id=2192&season=4433"
+resp = requests.get(url_jogadores, headers=HEADERS)
+jogadores = resp.json()["data"]
+
+cols = st.columns(4)
+
+for idx, jogador in enumerate(jogadores):
+    player_id = jogador["player_id"]
+    caminho = f"imagens_jogadores/{player_id}.png"
+    blob = bucket.blob(caminho)
+
+    if blob.exists():
+        imagem_bytes = blob.download_as_bytes()
+        
+        # REDIMENSIONA AQUI
+        imagem = redimensionar_imagem(imagem_bytes, tamanho=(250, 300))
+
+        with cols[idx % 4]:
+            with st.container(border=True):
+                st.image(imagem, use_container_width=True)
+                st.markdown(f"##### {jogador['first_name']}")
+                st.markdown(f"""
+                **Posição:** {jogador['position']}  
+                **Idade:** {jogador['age']}  
+                **Nacionalidade:** {jogador['nationality']}  
+                **Altura:** {jogador['height_cm']} cm  
+                **Peso:** {jogador['weight_kg']} kg
+                """)
