@@ -259,7 +259,6 @@ for idx, jogador in enumerate(jogadores):
                 st.markdown(f"""
                 **Posição:** {jogador['position']}  
                 **Idade:** {jogador['age']}  
-                **Nacionalidade:** {jogador['nationality']}  
                 **Altura:** {jogador['height_cm']} cm  
                 **Peso:** {jogador['weight_kg']} kg
                 """)
