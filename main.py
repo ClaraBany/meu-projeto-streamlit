@@ -6,7 +6,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
-import os
 
 # ================= CONFIGURAÇÃO DA PÁGINA =================
 st.set_page_config(
@@ -43,7 +42,6 @@ st.title("🏆 Projeto Copa — Histórico & Estatísticas")
 st.markdown("---")
 
 # ================= AUTENTICAÇÃO E DADOS =================
-# Cliente autenticado
 
 HEADERS = {"Authorization": st.secrets["api"]["API_KEY"]}
 
@@ -67,28 +65,24 @@ fifa_ranking = pd.merge(
 partidas = pd.read_csv('dataset/matches_1930_2022.csv')
 anos = sorted(partidas['Year'].unique().tolist(), reverse=True)
 
+copas = pd.read_csv('dataset/world_cup.csv')
+copas = copas.drop(['Host', 'Teams', 'Runner-Up', 'TopScorrer', 'Attendance', 'AttendanceAvg', 'Matches'], axis=1)
+
+times = pd.read_csv('dataset/jogadores_com_imagens.csv')
+times = times[['team_name', 'team_id']]
+
 # Filtrar apenas partidas do Brasil
 partidas_brasil = partidas[
     (partidas["home_team"] == "Brazil") | 
     (partidas["away_team"] == "Brazil")
 ]
 
-# Extrair lista de oponentes
-oponentes = []
-for _, row in partidas_brasil.iterrows():
-    if row["home_team"] == "Brazil":
-        oponentes.append(row["away_team"])
-    else:
-        oponentes.append(row["home_team"])
-
-oponentes = sorted(list(set(oponentes)))
-
 # ================= FILTROS =================
 st.sidebar.title("🔍 Filtros de Pesquisa")
 
 oponente_selecionado = st.sidebar.selectbox(
     "Escolha o Oponente:",
-    ["Todos"] + oponentes
+    ["Todos"] + list(times['team_name'].unique())
 )
 ano_selecionado = st.sidebar.selectbox(
     "Escolha o Ano:",
@@ -103,7 +97,6 @@ else:
         ((partidas_brasil["home_team"] == "oponente_selecionado") | (partidas_brasil["away_team"] == oponente_selecionado)) &
         ((partidas_brasil["home_team"] == "Brazil") | (partidas_brasil["away_team"] == "Brazil"))
     ]
-    # Correção da lógica de filtro cruzado original
     partidas_filtradas = partidas_brasil[
         ((partidas_brasil["home_team"] == "Brazil") & (partidas_brasil["away_team"] == oponente_selecionado)) |
         (partidas_brasil["home_team"] == oponente_selecionado) & (partidas_brasil["away_team"] == "Brazil")
@@ -130,7 +123,7 @@ for _, row in partidas_filtradas.iterrows():
         else: empates += 1
 
 
-# ================= LAYOUT PRINCIPAL =================
+# ================= VISUALIZAÇÕES =================
 
 # 1. Seção de Cards/Métricas Rápidas para o Brasil
 st.subheader("📊 Desempenho do Filtro Atual")
@@ -149,10 +142,10 @@ st.markdown("---")
 # 2. Gráficos em Colunas lado a lado
 linha1_col1, linha1_col2 = st.columns(2)
 
+#========= RANKING CAMPEÕES ==============
 with linha1_col1:
     st.subheader("🥇 Ranking de Campeões")
-    copas = pd.read_csv('dataset/world_cup.csv')
-    copas = copas.drop(['Host', 'Teams', 'Runner-Up', 'TopScorrer', 'Attendance', 'AttendanceAvg', 'Matches'], axis=1)
+    
     titulos = copas["Champion"].value_counts().reset_index()
     titulos.columns = ["Champion", "titulos"]
 
@@ -175,8 +168,8 @@ with linha1_col1:
     )
     st.plotly_chart(fig1, use_container_width=True)
 
+#========= JOGOS BRASIL X OPONENTE ==============
 with linha1_col2:
-    # Título dinâmico
     if oponente_selecionado == "Todos":
         titulo_graf2 = "Histórico Geral do Brasil em Copas"
         nomes_barras = ["Vitórias do Brasil", "Derrotas do Brasil", "Empates"]
@@ -186,7 +179,6 @@ with linha1_col2:
 
     st.subheader(titulo_graf2)
     
-    # Gráfico Plotly com design Copa
     fig2 = go.Figure(data=[
         go.Bar(
             x=nomes_barras,
@@ -210,6 +202,7 @@ with linha1_col2:
     
     st.plotly_chart(fig2, use_container_width=True)
 
+#========= FIFA RANKING ==============
 st.subheader("Fifa Ranking 2022 x 2026")
 
 df = fifa_ranking.set_index('team')
@@ -225,20 +218,27 @@ fig = px.bar(fifa_long, x="team", y="points", color="year", barmode="group")
 fig.update_xaxes(range=[-0.5, 9.5])
 st.plotly_chart(fig, width="stretch")
 
-# Função para redimensionar
+#========= JOGADORES SELEÇÃO ==============
+
 def redimensionar_imagem(imagem_bytes, tamanho=(250, 300)):
     """Redimensiona imagem para tamanho fixo"""
     img = Image.open(BytesIO(imagem_bytes))
     img = img.resize(tamanho, Image.Resampling.LANCZOS)
     return img
 
-st.title("Seleção Brasileira")
 
-# Seu fetch de dados
-url_jogadores = "https://footballdata.io/api/v1/players?team_id=2192&season=4433"
+if oponente_selecionado == 'Todos':
+    time_id = 2192 #Brasil
+    titulo_graf = "Seleção Brasileira"
+else:
+    time_id = times.loc[times["team_name"] == oponente_selecionado, 'team_id'].values[0]
+    titulo_graf = f"Seleção {oponente_selecionado}"
+
+url_jogadores = f"https://footballdata.io/api/v1/players?team_id={time_id}"
 resp = requests.get(url_jogadores, headers=HEADERS)
 jogadores = resp.json()["data"]
 
+st.title(titulo_graf)
 cols = st.columns(4)
 
 for idx, jogador in enumerate(jogadores):
@@ -249,7 +249,6 @@ for idx, jogador in enumerate(jogadores):
     if blob.exists():
         imagem_bytes = blob.download_as_bytes()
         
-        # REDIMENSIONA AQUI
         imagem = redimensionar_imagem(imagem_bytes, tamanho=(250, 300))
 
         with cols[idx % 4]:
