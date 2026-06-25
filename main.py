@@ -232,9 +232,85 @@ fifa_long = fifa_ranking.melt(
     value_name='points'
 )
 
-fig = px.bar(fifa_long, x="team", y="points", color="year", barmode="group")
-fig.update_xaxes(range=[-0.5, 9.5])
-st.plotly_chart(fig, width="stretch")
+fig3 = px.bar(fifa_long, x="team", y="points", color="year", barmode="group")
+fig3.update_xaxes(range=[-0.5, 9.5])
+st.plotly_chart(fig3, width="stretch")
+
+#========= MEDIA GOLS: ANFITRIAO X VISITANTE ==============
+linha3_col1, linha3_col2 = st.columns(2)
+with linha3_col1:
+    st.subheader("Média de gols: Anfitrião x Visitante")
+
+    anfitriao_casa = partidas[partidas["home_team"] == partidas["Host"]]
+    anfitriao_fora = partidas[partidas["away_team"] == partidas["Host"]]
+
+    gols_anfitriao = pd.concat([
+        anfitriao_casa["home_score"],
+        anfitriao_fora["away_score"]
+    ])
+
+    gols_visitante = pd.concat([
+        anfitriao_casa["away_score"],
+        anfitriao_fora["home_score"]
+    ])
+
+    dados_grafico = pd.DataFrame({
+        "Time": ["Anfitrião", "Visitante"],
+        "Média de gols": [gols_anfitriao.mean(), gols_visitante.mean()]
+    })
+
+    fig4 = go.Figure(data=[
+        go.Bar(
+            x=dados_grafico["Time"],
+            y=dados_grafico["Média de gols"],
+            marker=dict(
+                color=["#009c3b", "#1e3d59"],
+                line=dict(color="#ffffff", width=2)
+            ),
+            text=dados_grafico["Média de gols"].round(2),
+            textposition="outside"
+        )
+    ])
+
+    fig4.update_layout(
+        yaxis_title="Média de gols por jogo",
+        showlegend=False,
+        margin=dict(t=40, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig4, use_container_width=True)
+
+#========= COPAS: ANFITRIAO X VISITANTE ==============
+with linha3_col2:
+    st.subheader("Vencedores de copa: Anfitrião x Visitante")
+
+    copas_raw = pd.read_csv('dataset/world_cup.csv')
+
+    copas_raw["Vencedor"] = copas_raw.apply(
+        lambda row: "Anfitrião" if row["Champion"] == row["Host"] else "Visitante",
+        axis=1
+    )
+
+    vitorias_anfitriao = copas_raw["Vencedor"].value_counts().reset_index()
+    vitorias_anfitriao.columns = ["Vencedor", "Quantidade"]
+
+    fig5 = px.pie(
+        vitorias_anfitriao,
+        names="Vencedor",
+        values="Quantidade",
+        color="Vencedor",
+        color_discrete_map={
+            "Anfitrião": "#009c3b",
+            "Visitante": "#1e3d59"
+        },
+    )
+
+    fig5.update_traces(textinfo="percent+label")
+    fig5.update_layout(
+        margin=dict(t=40, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig5, use_container_width=True)
 
 #========= JOGADORES SELEÇÃO ==============
 
