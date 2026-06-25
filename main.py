@@ -64,10 +64,7 @@ fifa_ranking = pd.merge(
 
 partidas = pd.read_csv('dataset/matches_1930_2022.csv')
 anos = sorted(partidas['Year'].unique().tolist(), reverse=True)
-
 copas = pd.read_csv('dataset/world_cup.csv')
-copas = copas.drop(['Host', 'Teams', 'Runner-Up', 'TopScorrer', 'Attendance', 'AttendanceAvg', 'Matches'], axis=1)
-
 times = pd.read_csv('dataset/jogadores_com_imagens.csv')
 times = times[['team_name', 'team_id']]
 
@@ -128,16 +125,37 @@ for _, row in partidas_filtradas.iterrows():
 # 1. Seção de Cards/Métricas Rápidas para o Brasil
 st.subheader("📊 Desempenho do Filtro Atual")
 col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric(label="Total de Partidas", value=len(partidas_filtradas))
-with col2:
-    st.metric(label="Vitórias do Brasil", value=vitorias_brasil)
-with col3:
-    st.metric(label="Empates", value=empates)
-with col4:
-    st.metric(label="Derrotas", value=vitorias_oponente)
+
+col1.metric(label="Total de Partidas", value=len(partidas_filtradas))
+col2.metric(label="Vitórias do Brasil", value=vitorias_brasil)
+col3.metric(label="Empates", value=empates)
+col4.metric(label="Derrotas", value=vitorias_oponente)
 
 st.markdown("---")
+
+#========= VITORIAS DO BRASIL POR COPA ==============
+st.subheader("Vitórias do Brasil por copa")
+vitorias_por_copa = partidas_brasil.groupby('Year').apply(
+    lambda x: sum(
+        ((x['home_team'] == 'Brazil') & (x['home_score'] > x['away_score'])) |
+        ((x['away_team'] == 'Brazil') & (x['away_score'] > x['home_score']))
+    )
+).reset_index()
+
+vitorias_por_copa.columns = ['Ano', 'Vitórias']
+
+fig = px.line(
+    vitorias_por_copa,
+    x='Ano',
+    y='Vitórias',
+    markers=True,
+    line_shape="linear"
+)
+
+fig.update_traces(line=dict(color="#009c3b", width=3), marker=dict(size=10))
+fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+
+st.plotly_chart(fig, use_container_width=True)
 
 # 2. Gráficos em Colunas lado a lado
 linha1_col1, linha1_col2 = st.columns(2)
