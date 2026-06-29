@@ -230,18 +230,46 @@ with linha1_col2:
 #========= FIFA RANKING ==============
 st.subheader("Fifa Ranking 2022 x 2026")
 
-df = fifa_ranking.set_index('team')
+col_cb1, col_cb2, _ = st.columns([1, 1, 6])
+with col_cb1:
+    mostrar_2026 = st.checkbox("Mostrar 2026", value=True)
+with col_cb2:
+    mostrar_2022 = st.checkbox("Mostrar 2022", value=True)
 
-fifa_long = fifa_ranking.melt(
-    id_vars='team',
-    value_vars=['points_2026','points_2022'],
-    var_name='year',
-    value_name='points'
-)
+anos_visiveis = []
+if mostrar_2026:
+    anos_visiveis.append("points_2026")
+if mostrar_2022:
+    anos_visiveis.append("points_2022")
 
-fig3 = px.bar(fifa_long, x="team", y="points", color="year", barmode="group")
-fig3.update_xaxes(range=[-0.5, 9.5])
-st.plotly_chart(fig3, width="stretch")
+if not anos_visiveis:
+    st.warning("Selecione ao menos um ano para exibir o gráfico.")
+else:
+    fifa_ordenado = fifa_ranking.copy()
+    fifa_ordenado["_sort_key"] = fifa_ordenado[anos_visiveis].mean(axis=1)
+    fifa_ordenado = fifa_ordenado.sort_values("_sort_key", ascending=False)
+
+    ordem_times = fifa_ordenado["team"].tolist()
+
+    fifa_long = fifa_ordenado.melt(
+        id_vars='team',
+        value_vars=anos_visiveis,
+        var_name='year',
+        value_name='points'
+    )
+
+    fig3 = px.bar(
+        fifa_long,
+        x="team",
+        y="points",
+        color="year",
+        barmode="group",
+        category_orders={"team": ordem_times},
+        text="points"
+    )
+    fig3.update_traces(texttemplate="%{text:.0f}", textposition="outside")
+    fig3.update_xaxes(range=[-0.5, 9.5])
+    st.plotly_chart(fig3, width='stretch')
 
 #========= MEDIA GOLS: ANFITRIAO X VISITANTE ==============
 linha3_col1, linha3_col2 = st.columns(2)
@@ -291,14 +319,13 @@ with linha3_col1:
 with linha3_col2:
     st.subheader("Vencedores de copa: Anfitrião x Visitante")
 
-    copas_raw = pd.read_csv('dataset/world_cup.csv')
-
-    copas_raw["Vencedor"] = copas_raw.apply(
+    copas_host = copas.copy()
+    copas_host["Vencedor"] = copas_host.apply(
         lambda row: "Anfitrião" if row["Champion"] == row["Host"] else "Visitante",
         axis=1
     )
 
-    vitorias_anfitriao = copas_raw["Vencedor"].value_counts().reset_index()
+    vitorias_anfitriao = copas_host["Vencedor"].value_counts().reset_index()
     vitorias_anfitriao.columns = ["Vencedor", "Quantidade"]
 
     fig5 = px.pie(
