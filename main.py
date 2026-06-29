@@ -37,7 +37,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Título Principal
 st.title("🏆 Análise de Dados - Copa do Mundo")
 st.markdown("---")
 
@@ -68,7 +67,6 @@ copas = pd.read_csv('dataset/world_cup.csv')
 times = pd.read_csv('dataset/jogadores_com_imagens.csv')
 times = times[['team_name', 'team_id']]
 
-# Filtrar apenas partidas do Brasil
 partidas_brasil = partidas[
     (partidas["home_team"] == "Brazil") | 
     (partidas["away_team"] == "Brazil")
@@ -104,7 +102,6 @@ else:
 if ano_selecionado != "Todos":
     partidas_filtradas = partidas_filtradas[(partidas_filtradas["Year"] == int(ano_selecionado))]
 
-# Contar resultados
 vitorias_brasil = 0
 vitorias_oponente = 0
 empates = 0
@@ -153,14 +150,10 @@ fig = px.line(
 )
 
 fig.update_traces(line=dict(color="#009c3b", width=3), marker=dict(size=10))
-fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
-
-st.plotly_chart(fig, use_container_width=True)
-
-# 2. Gráficos em Colunas lado a lado
-linha1_col1, linha1_col2 = st.columns(2)
+st.plotly_chart(fig, width='stretch')
 
 #========= RANKING CAMPEÕES ==============
+linha1_col1, linha1_col2 = st.columns(2)
 with linha1_col1:
     st.subheader("🥇 Ranking de Campeões")
     
@@ -183,15 +176,13 @@ with linha1_col1:
 
     fig1.update_traces(textposition="outside", cliponaxis=False)
     fig1.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         xaxis_title="Copas Conquistadas",
         yaxis_title="País",
         coloraxis_showscale=False,
         margin=dict(t=20, b=20, l=20, r=20)
     )
 
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width='stretch')
 
 #========= JOGOS BRASIL X OPONENTE ==============
 with linha1_col2:
@@ -218,14 +209,12 @@ with linha1_col2:
     ])
 
     fig2.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
         yaxis_title="Número de partidas",
         showlegend=False,
         margin=dict(t=20, b=20, l=20, r=20)
     )
     
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width='stretch')
 
 #========= FIFA RANKING ==============
 st.subheader("Fifa Ranking 2022 x 2026")
@@ -266,7 +255,7 @@ else:
         barmode="group",
             category_orders={
             "team": ordem_times,
-            "year": ["points_2022", "points_2026"]  # força a ordem desejada
+            "year": ["points_2022", "points_2026"]
         },
         text="points"
     )
@@ -316,7 +305,7 @@ with linha3_col1:
         margin=dict(t=40, b=20, l=20, r=20)
     )
 
-    st.plotly_chart(fig4, use_container_width=True)
+    st.plotly_chart(fig4, width='stretch')
 
 #========= COPAS: ANFITRIAO X VISITANTE ==============
 with linha3_col2:
@@ -347,12 +336,11 @@ with linha3_col2:
         margin=dict(t=40, b=20, l=20, r=20)
     )
 
-    st.plotly_chart(fig5, use_container_width=True)
+    st.plotly_chart(fig5, width='stretch')
 
 #========= JOGADORES SELEÇÃO ==============
 
 def redimensionar_imagem(imagem_bytes, tamanho=(250, 300)):
-    """Redimensiona imagem para tamanho fixo"""
     img = Image.open(BytesIO(imagem_bytes))
     img = img.resize(tamanho, Image.Resampling.LANCZOS)
     return img
@@ -384,7 +372,7 @@ for idx, jogador in enumerate(jogadores):
 
         with cols[idx % 4]:
             with st.container(border=True):
-                st.image(imagem, use_container_width=True)
+                st.image(imagem, width='stretch')
                 st.markdown(f"##### {jogador['first_name']}")
                 st.markdown(f"""
                 **Posição:** {jogador['position']}  
