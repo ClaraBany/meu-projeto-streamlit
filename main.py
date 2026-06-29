@@ -56,8 +56,8 @@ fifa_ranking_2026 = pd.read_csv('dataset/fifa_ranking_2026-06-08.csv')
 fifa_ranking_2022 = pd.read_csv('dataset/fifa_ranking_2022-10-06.csv')
 
 fifa_ranking = pd.merge(
-    fifa_ranking_2026[['team','points']],
     fifa_ranking_2022[['team','points']],
+    fifa_ranking_2026[['team','points']],
     on='team',
     suffixes=('_2026','_2022')
 )
