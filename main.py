@@ -38,7 +38,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título Principal
-st.title("🏆 Analise de Dados Copa do Mundo")
+st.title("🏆 Análise de Dados - Copa do Mundo")
 st.markdown("---")
 
 # ================= AUTENTICAÇÃO E DADOS =================
@@ -167,6 +167,8 @@ with linha1_col1:
     titulos = copas["Champion"].value_counts().reset_index()
     titulos.columns = ["Champion", "titulos"]
 
+    titulos = titulos.sort_values(by="titulos", ascending=False)
+
     fig1 = px.bar(
         titulos,
         x="titulos",
@@ -176,6 +178,9 @@ with linha1_col1:
         color_continuous_scale="Viridis",
         text="titulos",
     )
+
+    fig1.update_yaxes(categoryorder="total ascending")
+
     fig1.update_traces(textposition="outside", cliponaxis=False)
     fig1.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
@@ -185,6 +190,7 @@ with linha1_col1:
         coloraxis_showscale=False,
         margin=dict(t=20, b=20, l=20, r=20)
     )
+
     st.plotly_chart(fig1, use_container_width=True)
 
 #========= JOGOS BRASIL X OPONENTE ==============
