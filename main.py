@@ -264,7 +264,10 @@ else:
         y="points",
         color="year",
         barmode="group",
-        category_orders={"team": ordem_times},
+            category_orders={
+            "team": ordem_times,
+            "year": ["points_2022", "points_2026"]  # força a ordem desejada
+        },
         text="points"
     )
     fig3.update_traces(texttemplate="%{text:.0f}", textposition="outside")
