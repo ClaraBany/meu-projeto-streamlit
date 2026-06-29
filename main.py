@@ -38,7 +38,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título Principal
-st.title("🏆 Projeto Copa — Histórico & Estatísticas")
+st.title("🏆 Analise de Dados Copa do Mundo")
 st.markdown("---")
 
 # ================= AUTENTICAÇÃO E DADOS =================
@@ -123,7 +123,7 @@ for _, row in partidas_filtradas.iterrows():
 # ================= VISUALIZAÇÕES =================
 
 # 1. Seção de Cards/Métricas Rápidas para o Brasil
-st.subheader("📊 Desempenho do Filtro Atual")
+st.subheader("📊 Desempenho do Brasil")
 col1, col2, col3, col4 = st.columns(4)
 
 col1.metric(label="Total de Partidas", value=len(partidas_filtradas))
@@ -169,8 +169,9 @@ with linha1_col1:
 
     fig1 = px.bar(
         titulos,
-        x="Champion",
-        y="titulos",
+        x="titulos",
+        y="Champion",
+        orientation="h",
         color="titulos",
         color_continuous_scale="Viridis",
         text="titulos",
@@ -179,8 +180,8 @@ with linha1_col1:
     fig1.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        xaxis_title="País",
-        yaxis_title="Copas Conquistadas",
+        xaxis_title="Copas Conquistadas",
+        yaxis_title="País",
         coloraxis_showscale=False,
         margin=dict(t=20, b=20, l=20, r=20)
     )
